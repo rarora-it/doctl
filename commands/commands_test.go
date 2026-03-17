@@ -292,6 +292,7 @@ type tcMocks struct {
 	partnerAttachments    *domocks.MockPartnerAttachmentsService
 	spacesKeys            *domocks.MockSpacesKeysService
 	gradientAI            *domocks.MockGradientAIService
+	dedicatedInferences   *domocks.MockDedicatedInferenceService
 	nfs                   *domocks.MockNfsService
 	nfsActions            *domocks.MockNfsActionsService
 	security              *domocks.MockSecurityService
@@ -350,6 +351,7 @@ func withTestClient(t *testing.T, tFn testFn) {
 		partnerAttachments:    domocks.NewMockPartnerAttachmentsService(ctrl),
 		spacesKeys:            domocks.NewMockSpacesKeysService(ctrl),
 		gradientAI:            domocks.NewMockGradientAIService(ctrl),
+		dedicatedInferences:   domocks.NewMockDedicatedInferenceService(ctrl),
 		nfs:                   domocks.NewMockNfsService(ctrl),
 		nfsActions:            domocks.NewMockNfsActionsService(ctrl),
 		security:              domocks.NewMockSecurityService(ctrl),
@@ -415,7 +417,8 @@ func withTestClient(t *testing.T, tFn testFn) {
 		OAuth:              func() do.OAuthService { return tm.oauth },
 		PartnerAttachments: func() do.PartnerAttachmentsService { return tm.partnerAttachments },
 		SpacesKeys:         func() do.SpacesKeysService { return tm.spacesKeys },
-		GradientAI:         func() do.GradientAIService { return tm.gradientAI },
+		GradientAI:          func() do.GradientAIService { return tm.gradientAI },
+		DedicatedInferences: func() do.DedicatedInferenceService { return tm.dedicatedInferences },
 		Nfs:                func() do.NfsService { return tm.nfs },
 		NfsActions:         func() do.NfsActionsService { return tm.nfsActions },
 		Security:           func() do.SecurityService { return tm.security },
