@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"os"
 	"testing"
 
 	"github.com/digitalocean/godo"
@@ -12,16 +13,46 @@ import (
 
 // Test data
 var (
+	testDedicatedInferenceSpec = &godo.DedicatedInferenceSpec{
+		Version: 0,
+		Name:    "test-dedicated-inference",
+		Region:  "nyc2",
+		VPC: &godo.DedicatedInferenceVPC{
+			UUID: "00000000-0000-4000-8000-000000000001",
+		},
+		EnablePublicEndpoint: true,
+		ModelDeployments: []*godo.DedicatedInferenceModelDeployment{
+			{
+				ModelSlug:     "mistral/mistral-7b-instruct-v3",
+				ModelProvider: "hugging_face",
+				Accelerators: []*godo.DedicatedInferenceAccelerator{
+					{
+						Scale:           2,
+						Type:            "prefill",
+						AcceleratorSlug: "gpu-mi300x1-192gb",
+					},
+					{
+						Scale:           4,
+						Type:            "decode",
+						AcceleratorSlug: "gpu-mi300x1-192gb",
+					},
+				},
+			},
+		},
+	}
+
 	testDedicatedInference = do.DedicatedInference{
 		DedicatedInference: &godo.DedicatedInference{
 			ID:      "00000000-0000-4000-8000-000000000000",
-			Name:    "test-dedicated-inference",
+			OwnerID: 1276363,
+			State:   "PROVISIONING",
 			Region:  "nyc2",
 			VPCUUID: "00000000-0000-4000-8000-000000000001",
-			Status:  "CREATING",
-			Endpoints: &godo.DedicatedInferenceEndpoints{
-				PublicEndpointFQDN:  "https://test-public.do-infra.ai",
-				PrivateEndpointFQDN: "https://test-private.do-infra.ai",
+			Spec:    testDedicatedInferenceSpec,
+			PendingDeployment: &godo.DedicatedInferencePendingDeployment{
+				ID:    "00000000-0000-4000-8000-000000000002",
+				Spec:  testDedicatedInferenceSpec,
+				State: "PROVISIONING",
 			},
 		},
 	}
@@ -45,52 +76,77 @@ func TestDedicatedInferenceCommand(t *testing.T) {
 
 func TestRunDedicatedInferenceCreate(t *testing.T) {
 	withTestClient(t, func(config *CmdConfig, tm *tcMocks) {
-		config.Doit.Set(config.NS, doctl.ArgDedicatedInferenceName, testDedicatedInference.Name)
-		config.Doit.Set(config.NS, doctl.ArgDedicatedInferenceRegion, testDedicatedInference.Region)
-		config.Doit.Set(config.NS, doctl.ArgDedicatedInferenceModelSlug, "hf://mistral/mistral-7b-instruct-v3")
-		config.Doit.Set(config.NS, doctl.ArgDedicatedInferenceAcceleratorSlug, "gpu-mi300x1-192gb")
-		config.Doit.Set(config.NS, doctl.ArgDedicatedInferenceNodeCount, 2)
-		config.Doit.Set(config.NS, doctl.ArgDedicatedInferenceVPCUUID, testDedicatedInference.VPCUUID)
+		// Write a temp spec file
+		specJSON := `{
+			"version": 0,
+			"name": "test-dedicated-inference",
+			"region": "nyc2",
+			"vpc": {"uuid": "00000000-0000-4000-8000-000000000001"},
+			"enable_public_endpoint": true,
+			"model_deployments": [
+				{
+					"model_slug": "mistral/mistral-7b-instruct-v3",
+					"model_provider": "hugging_face",
+					"accelerators": [
+						{"scale": 2, "type": "prefill", "accelerator_slug": "gpu-mi300x1-192gb"},
+						{"scale": 4, "type": "decode", "accelerator_slug": "gpu-mi300x1-192gb"}
+					]
+				}
+			]
+		}`
+		tmpFile := t.TempDir() + "/spec.json"
+		err := os.WriteFile(tmpFile, []byte(specJSON), 0644)
+		assert.NoError(t, err)
+
+		config.Doit.Set(config.NS, doctl.ArgDedicatedInferenceSpec, tmpFile)
 
 		expectedReq := &godo.DedicatedInferenceCreateRequest{
-			Name:            testDedicatedInference.Name,
-			Region:          testDedicatedInference.Region,
-			ModelSlug:       "hf://mistral/mistral-7b-instruct-v3",
-			AcceleratorSlug: "gpu-mi300x1-192gb",
-			NodeCount:       2,
-			VPCUUID:         testDedicatedInference.VPCUUID,
+			Spec: testDedicatedInferenceSpec,
 		}
 
 		tm.dedicatedInferences.EXPECT().Create(expectedReq).Return(&testDedicatedInference, nil)
 
-		err := RunDedicatedInferenceCreate(config)
+		err = RunDedicatedInferenceCreate(config)
 		assert.NoError(t, err)
 	})
 }
 
-func TestRunDedicatedInferenceCreate_WithHuggingFaceToken(t *testing.T) {
+func TestRunDedicatedInferenceCreate_WithAccessToken(t *testing.T) {
 	withTestClient(t, func(config *CmdConfig, tm *tcMocks) {
-		config.Doit.Set(config.NS, doctl.ArgDedicatedInferenceName, testDedicatedInference.Name)
-		config.Doit.Set(config.NS, doctl.ArgDedicatedInferenceRegion, testDedicatedInference.Region)
-		config.Doit.Set(config.NS, doctl.ArgDedicatedInferenceModelSlug, "hf://mistral/mistral-7b-instruct-v3")
-		config.Doit.Set(config.NS, doctl.ArgDedicatedInferenceAcceleratorSlug, "gpu-mi300x1-192gb")
-		config.Doit.Set(config.NS, doctl.ArgDedicatedInferenceNodeCount, 2)
-		config.Doit.Set(config.NS, doctl.ArgDedicatedInferenceVPCUUID, testDedicatedInference.VPCUUID)
-		config.Doit.Set(config.NS, doctl.ArgDedicatedInferenceHuggingFaceToken, "hf_test_token")
+		specJSON := `{
+			"version": 0,
+			"name": "test-dedicated-inference",
+			"region": "nyc2",
+			"vpc": {"uuid": "00000000-0000-4000-8000-000000000001"},
+			"enable_public_endpoint": true,
+			"model_deployments": [
+				{
+					"model_slug": "mistral/mistral-7b-instruct-v3",
+					"model_provider": "hugging_face",
+					"accelerators": [
+						{"scale": 2, "type": "prefill", "accelerator_slug": "gpu-mi300x1-192gb"},
+						{"scale": 4, "type": "decode", "accelerator_slug": "gpu-mi300x1-192gb"}
+					]
+				}
+			]
+		}`
+		tmpFile := t.TempDir() + "/spec.json"
+		err := os.WriteFile(tmpFile, []byte(specJSON), 0644)
+		assert.NoError(t, err)
+
+		config.Doit.Set(config.NS, doctl.ArgDedicatedInferenceSpec, tmpFile)
+		config.Doit.Set(config.NS, doctl.ArgDedicatedInferenceAccessTokenHuggingFace, "hf_test_token")
 
 		expectedReq := &godo.DedicatedInferenceCreateRequest{
-			Name:             testDedicatedInference.Name,
-			Region:           testDedicatedInference.Region,
-			ModelSlug:        "hf://mistral/mistral-7b-instruct-v3",
-			AcceleratorSlug:  "gpu-mi300x1-192gb",
-			NodeCount:        2,
-			VPCUUID:          testDedicatedInference.VPCUUID,
-			HuggingFaceToken: "hf_test_token",
+			Spec: testDedicatedInferenceSpec,
+			AccessTokens: &godo.DedicatedInferenceAccessTokens{
+				HuggingFaceToken: "hf_test_token",
+			},
 		}
 
 		tm.dedicatedInferences.EXPECT().Create(expectedReq).Return(&testDedicatedInference, nil)
 
-		err := RunDedicatedInferenceCreate(config)
+		err = RunDedicatedInferenceCreate(config)
 		assert.NoError(t, err)
 	})
 }

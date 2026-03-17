@@ -841,24 +841,9 @@ const (
 
 	// Dedicated Inference Args
 
-	// ArgDedicatedInferenceName is the name of the dedicated inference endpoint.
-	ArgDedicatedInferenceName = "name"
+	// ArgDedicatedInferenceSpec is the path to a dedicated inference spec file.
+	ArgDedicatedInferenceSpec = "spec"
 
-	// ArgDedicatedInferenceRegion is the region for the dedicated inference endpoint.
-	ArgDedicatedInferenceRegion = "region"
-
-	// ArgDedicatedInferenceModelSlug is the LLM model slug with provider info (e.g. "hf://mistral/mistral-7b-instruct-v3").
-	ArgDedicatedInferenceModelSlug = "model-slug"
-
-	// ArgDedicatedInferenceAcceleratorSlug is the GPU slug (e.g. "gpu-mi300x1-192gb").
-	ArgDedicatedInferenceAcceleratorSlug = "accelerator-slug"
-
-	// ArgDedicatedInferenceNodeCount is the number of GPU nodes to allocate.
-	ArgDedicatedInferenceNodeCount = "node-count"
-
-	// ArgDedicatedInferenceVPCUUID is the VPC UUID for the dedicated inference endpoint.
-	ArgDedicatedInferenceVPCUUID = "vpc-uuid"
-
-	// ArgDedicatedInferenceHuggingFaceToken is the Hugging Face token (optional).
-	ArgDedicatedInferenceHuggingFaceToken = "hugging-face-token"
+	// ArgDedicatedInferenceAccessTokenHuggingFace is the Hugging Face access token (optional).
+	ArgDedicatedInferenceAccessTokenHuggingFace = "access-token-hugging-face"
 )

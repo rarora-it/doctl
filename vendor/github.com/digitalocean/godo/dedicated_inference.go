@@ -23,33 +23,67 @@ type DedicatedInferenceServiceOp struct {
 	client *Client
 }
 
-// DedicatedInference represents a dedicated inference endpoint.
+// DedicatedInference represents a dedicated inference endpoint response.
 type DedicatedInference struct {
-	ID        string                       `json:"id,omitempty"`
-	Name      string                       `json:"name,omitempty"`
-	Region    string                       `json:"region,omitempty"`
-	VPCUUID   string                       `json:"vpc_uuid,omitempty"`
-	Status    string                       `json:"status,omitempty"`
-	Endpoints *DedicatedInferenceEndpoints `json:"endpoints,omitempty"`
-	CreatedAt *Timestamp                   `json:"created_at,omitempty"`
-	UpdatedAt *Timestamp                   `json:"updated_at,omitempty"`
+	ID                string                               `json:"id,omitempty"`
+	OwnerID           int64                                `json:"owner_id,omitempty"`
+	State             string                               `json:"state,omitempty"`
+	Region            string                               `json:"region,omitempty"`
+	VPCUUID           string                               `json:"vpc_uuid,omitempty"`
+	Spec              *DedicatedInferenceSpec              `json:"spec,omitempty"`
+	PendingDeployment *DedicatedInferencePendingDeployment `json:"pending-deployment,omitempty"`
+	CreatedAt         *Timestamp                           `json:"created_at,omitempty"`
+	UpdatedAt         *Timestamp                           `json:"updated_at,omitempty"`
 }
 
-// DedicatedInferenceEndpoints represents the endpoints for a dedicated inference.
-type DedicatedInferenceEndpoints struct {
-	PublicEndpointFQDN  string `json:"public_endpoint_fqdn,omitempty"`
-	PrivateEndpointFQDN string `json:"private_endpoint_fqdn,omitempty"`
+// DedicatedInferenceSpec represents the deployment specification for a dedicated inference.
+type DedicatedInferenceSpec struct {
+	Version              int                                  `json:"version" yaml:"version"`
+	Name                 string                               `json:"name" yaml:"name"`
+	Region               string                               `json:"region" yaml:"region"`
+	VPC                  *DedicatedInferenceVPC               `json:"vpc,omitempty" yaml:"vpc,omitempty"`
+	EnablePublicEndpoint bool                                 `json:"enable_public_endpoint" yaml:"enable_public_endpoint"`
+	ModelDeployments     []*DedicatedInferenceModelDeployment `json:"model_deployments" yaml:"model_deployments"`
+}
+
+// DedicatedInferenceVPC represents VPC configuration within a spec.
+type DedicatedInferenceVPC struct {
+	UUID string `json:"uuid" yaml:"uuid"`
+}
+
+// DedicatedInferenceModelDeployment represents a model deployment within a spec.
+type DedicatedInferenceModelDeployment struct {
+	ModelSlug      string                           `json:"model_slug" yaml:"model_slug"`
+	ModelProvider  string                           `json:"model_provider" yaml:"model_provider"`
+	WorkloadConfig map[string]interface{}           `json:"workload_config,omitempty" yaml:"workload_config,omitempty"`
+	Accelerators   []*DedicatedInferenceAccelerator `json:"accelerators" yaml:"accelerators"`
+}
+
+// DedicatedInferenceAccelerator represents an accelerator configuration within a model deployment.
+type DedicatedInferenceAccelerator struct {
+	Scale           int    `json:"scale" yaml:"scale"`
+	Type            string `json:"type" yaml:"type"`
+	AcceleratorSlug string `json:"accelerator_slug" yaml:"accelerator_slug"`
+}
+
+// DedicatedInferencePendingDeployment represents a pending deployment within the response.
+type DedicatedInferencePendingDeployment struct {
+	ID        string                  `json:"id,omitempty"`
+	Spec      *DedicatedInferenceSpec `json:"spec,omitempty"`
+	State     string                  `json:"state,omitempty"`
+	CreatedAt *Timestamp              `json:"created_at,omitempty"`
+	UpdatedAt *Timestamp              `json:"updated_at,omitempty"`
+}
+
+// DedicatedInferenceAccessTokens represents access tokens for model providers.
+type DedicatedInferenceAccessTokens struct {
+	HuggingFaceToken string `json:"hugging_face_token,omitempty"`
 }
 
 // DedicatedInferenceCreateRequest represents the request to create a dedicated inference endpoint.
 type DedicatedInferenceCreateRequest struct {
-	Name             string `json:"name"`
-	Region           string `json:"region"`
-	ModelSlug        string `json:"model_slug"`
-	AcceleratorSlug  string `json:"accelerator_slug"`
-	NodeCount        int    `json:"node_count"`
-	VPCUUID          string `json:"vpc_uuid"`
-	HuggingFaceToken string `json:"hugging_face_token,omitempty"`
+	Spec         *DedicatedInferenceSpec         `json:"spec"`
+	AccessTokens *DedicatedInferenceAccessTokens `json:"access_tokens,omitempty"`
 }
 
 type dedicatedInferenceRoot struct {

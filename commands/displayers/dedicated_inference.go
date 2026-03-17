@@ -21,11 +21,10 @@ func (d *DedicatedInference) Cols() []string {
 	return []string{
 		"ID",
 		"Name",
+		"State",
 		"Region",
 		"VPCUUID",
-		"Status",
-		"PublicEndpoint",
-		"PrivateEndpoint",
+		"PendingDeploymentState",
 		"CreatedAt",
 		"UpdatedAt",
 	}
@@ -33,15 +32,14 @@ func (d *DedicatedInference) Cols() []string {
 
 func (d *DedicatedInference) ColMap() map[string]string {
 	return map[string]string{
-		"ID":              "ID",
-		"Name":            "Name",
-		"Region":          "Region",
-		"VPCUUID":         "VPC UUID",
-		"Status":          "Status",
-		"PublicEndpoint":  "Public Endpoint",
-		"PrivateEndpoint": "Private Endpoint",
-		"CreatedAt":       "Created At",
-		"UpdatedAt":       "Updated At",
+		"ID":                     "ID",
+		"Name":                   "Name",
+		"State":                  "State",
+		"Region":                 "Region",
+		"VPCUUID":                "VPC UUID",
+		"PendingDeploymentState": "Pending Deployment State",
+		"CreatedAt":              "Created At",
+		"UpdatedAt":              "Updated At",
 	}
 }
 
@@ -51,22 +49,23 @@ func (d *DedicatedInference) KV() []map[string]any {
 	}
 	out := make([]map[string]any, 0, len(d.DedicatedInferences))
 	for _, di := range d.DedicatedInferences {
-		publicEndpoint := ""
-		privateEndpoint := ""
-		if di.Endpoints != nil {
-			publicEndpoint = di.Endpoints.PublicEndpointFQDN
-			privateEndpoint = di.Endpoints.PrivateEndpointFQDN
+		name := ""
+		if di.Spec != nil {
+			name = di.Spec.Name
+		}
+		pendingState := ""
+		if di.PendingDeployment != nil {
+			pendingState = di.PendingDeployment.State
 		}
 		out = append(out, map[string]any{
-			"ID":              di.ID,
-			"Name":            di.Name,
-			"Region":          di.Region,
-			"VPCUUID":         di.VPCUUID,
-			"Status":          di.Status,
-			"PublicEndpoint":  publicEndpoint,
-			"PrivateEndpoint": privateEndpoint,
-			"CreatedAt":       di.CreatedAt,
-			"UpdatedAt":       di.UpdatedAt,
+			"ID":                     di.ID,
+			"Name":                   name,
+			"State":                  di.State,
+			"Region":                 di.Region,
+			"VPCUUID":                di.VPCUUID,
+			"PendingDeploymentState": pendingState,
+			"CreatedAt":              di.CreatedAt,
+			"UpdatedAt":              di.UpdatedAt,
 		})
 	}
 	return out
